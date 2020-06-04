@@ -9,8 +9,9 @@
 #include "SAM.h"
 #include "Version.h"
 
-#include <javax/microedition/lcdui/game.h>
-#include <javax/microedition/lcdui.h>
+//#include <javax/microedition/lcdui/game.h>
+//#include <javax/microedition/lcdui.h>
+#include <org/homebrew.h>
 
 #define PALETTE_SIZE 16
 
@@ -18,8 +19,8 @@
 static int palette[PALETTE_SIZE];
 static int screen[320*240 * 2];
 static uint8 __attribute__((aligned((4)))) bitmap[DISPLAY_X * DISPLAY_Y];
-static NOPH_GameCanvas_t canvas;
-static NOPH_Graphics_t graphics;
+//static NOPH_GameCanvas_t canvas;
+//static NOPH_Graphics_t graphics;
 
 #define ROTATED 1
 
@@ -49,10 +50,10 @@ static C64Display *c64_disp;
 
 int init_graphics(void)
 {
-        canvas = NOPH_GameCanvas_get();
-        graphics = NOPH_GameCanvas_getGraphics(canvas);
+        //canvas = NOPH_GameCanvas_get();
+        //graphics = NOPH_GameCanvas_getGraphics(canvas);
 
-        NOPH_Canvas_setFullScreenMode(canvas, 1);
+        //NOPH_Canvas_setFullScreenMode(canvas, 1);
 
 	return 1;
 }
@@ -91,72 +92,6 @@ void C64Display::NewPrefs(Prefs *prefs)
 {
 }
 
-#if 0
-/*
- *  Redraw bitmap
- */
-void C64Display::UpdateHalfSize(void)
-{
-        int x, y;
-	/* Update display.
-         *
-         * This is done in sweeps of 4 to improve Cibyl performance
-         */
-        for (y = 30; y < DISPLAY_Y; y++)
-        {
-                for (x = 0; x < DISPLAY_X; x+=sizeof(int))
-                {
-                        int src_off = y * DISPLAY_X + x;
-                        int dst_off = (y-30) * DISPLAY_X + x/2; //((DISPLAY_X-x) * DISPLAY_X)/2 + y;
-                        int *_bitmap = (int*)bitmap;
-                        int v = _bitmap[ src_off / sizeof(int) ];
-                        int b0 = (v & 0x000000ff);
-//                        int b1 = (v & 0x0000ff00) >> 8;
-                        int b2 = (v & 0x00ff0000) >> 16;
-//                        int b3 = (v & 0xff000000) >> 24;
-
-                      screen[ dst_off + 0 ] = palette[ b2 ];
-//                      screen[ dst_off + 1 ] = palette[ b2 ];
-                        screen[ dst_off + 1 ] = palette[ b0 ];
-//                      screen[ dst_off + 3 ] = palette[ b0 ];
-                }
-        }
-        NOPH_Graphics_drawRGB(graphics, (int)screen, 0, DISPLAY_X,
-                              0, 0,
-                              176, 220, 0);
-        NOPH_GameCanvas_flushGraphics(canvas);
-}
-
-void C64Display::UpdateFullSize(void)
-{
-        int x, y;
-
-        for (y = 30; y < DISPLAY_Y; y++)
-        {
-                for (x = 0; x < DISPLAY_X; x+=sizeof(int))
-                {
-                        int src_off = y * DISPLAY_X + x;
-                        int dst_off = (y-30) * DISPLAY_X + x/2; //((DISPLAY_X-x) * DISPLAY_X)/2 + y;
-                        int *_bitmap = (int*)bitmap;
-                        int v = _bitmap[ src_off / sizeof(int) ];
-                        int b0 = (v & 0x000000ff);
-                        int b1 = (v & 0x0000ff00) >> 8;
-                        int b2 = (v & 0x00ff0000) >> 16;
-                        int b3 = (v & 0xff000000) >> 24;
-
-                      screen[ dst_off + 0 ] = palette[ b3 ];
-                      screen[ dst_off + 1 ] = palette[ b2 ];
-                      screen[ dst_off + 2 ] = palette[ b1 ];
-                      screen[ dst_off + 3 ] = palette[ b0 ];
-                }
-        }
-        NOPH_Graphics_drawRGB(graphics, (int)screen, 0, DISPLAY_X,
-                              0, 0,
-                              320, 200, 0);
-        NOPH_GameCanvas_flushGraphics(canvas);
-}
-#endif
-
 void C64Display::Update(void)
 {
         int x, y;
@@ -165,8 +100,8 @@ void C64Display::Update(void)
         {
                 for (x = 0; x <= 320; x+=sizeof(int))
                 {
-                	int src_off = (y+20) * DISPLAY_X + (x+14);
-                        int dst_off = (320-x) * 240 + y;
+                	int src_off = (y+35) * DISPLAY_X + (x+22);
+                        int dst_off = /*(320-x) * 240 + y*/ y*320+x;
                         int *_bitmap = (int*)bitmap;
                         int v = _bitmap[ src_off / sizeof(int) ];
                         int b0 = (v & 0x000000ff);
@@ -174,16 +109,18 @@ void C64Display::Update(void)
                         int b2 = (v & 0x00ff0000) >> 16;
                         int b3 = (v & 0xff000000) >> 24;
 
-                        screen[ dst_off + 0 ]       = palette[ b0 ];
-                        screen[ dst_off + 1 * 240 ] = palette[ b1 ];
-                        screen[ dst_off + 2 * 240 ] = palette[ b2 ];
-                        screen[ dst_off + 3 * 240 ] = palette[ b3 ];
+                        screen[ dst_off + 3 ]       = palette[ b0 ];
+                        screen[ dst_off + 2 ] = palette[ b1 ];
+                        screen[ dst_off + 1 ] = palette[ b2 ];
+                        screen[ dst_off + 0 ] = palette[ b3 ];
                 }
         }
-        NOPH_Graphics_drawRGB(graphics, (int)screen, 0, 240,
+        NOPH_MyXlet_blitFramebuffer(0, 0, 320, 200, screen, 320);
+        NOPH_MyXlet_repaint();
+        /*NOPH_Graphics_drawRGB(graphics, (int)screen, 0, 240,
                               0, 0,
-                              240, 320, 0);
-        NOPH_GameCanvas_flushGraphics(canvas);
+                              240, 320, 0);*/
+        //NOPH_GameCanvas_flushGraphics(canvas);
 }
 
 /*
@@ -254,14 +191,18 @@ void C64Display::FakeKeyPress(int kc, bool shift, uint8 *CIA_key_matrix, uint8 *
 extern int autostart;
 int game_b_key = MATRIX(7, 4); /* Space */
 extern void cibyl_main_menu(void);
+extern void cibyl_keyboard_cfg(void);
+unsigned char keyboard_cfg[512];
+static int keyboard_state[69];
 void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joystick)
 {
-        int keyState = NOPH_GameCanvas_getKeyStates(canvas);
+#if 0
+        int keyState = 0;//NOPH_GameCanvas_getKeyStates(canvas);
         int c64_key = 0;
 
-        if (keyState & NOPH_GameCanvas_GAME_A_PRESSED)
+        if (keyState & 0)//NOPH_GameCanvas_GAME_A_PRESSED)
         	cibyl_main_menu();
-        if (keyState & NOPH_GameCanvas_GAME_B_PRESSED)
+        if (keyState & 0)//NOPH_GameCanvas_GAME_B_PRESSED)
         	this->FakeKeyPress(game_b_key, false, key_matrix,
         			rev_matrix, NULL);
         else
@@ -270,7 +211,7 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 
         /* Key handling for joystick. For reference: This was the site of
          * a very long-standing nasty bug... Stupid Simon... */
-        if (keyState & NOPH_GameCanvas_FIRE_PRESSED)
+        if (keyState & 0)//NOPH_GameCanvas_FIRE_PRESSED)
                 *joystick &= ~0x10;
         else
                 *joystick |= 0x10;
@@ -289,22 +230,75 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
         	kc_down = 0x04;
         }
 
-        if (keyState & NOPH_GameCanvas_LEFT_PRESSED)
+        if (keyState & 0)//NOPH_GameCanvas_LEFT_PRESSED)
                 *joystick &= ~kc_left;
         else
                 *joystick |= kc_left;
-        if (keyState & NOPH_GameCanvas_RIGHT_PRESSED)
+        if (keyState & 0)//NOPH_GameCanvas_RIGHT_PRESSED)
                 *joystick &= ~kc_right;
         else
                 *joystick |= kc_right;
-        if (keyState & NOPH_GameCanvas_DOWN_PRESSED)
+        if (keyState & 0)//NOPH_GameCanvas_DOWN_PRESSED)
                 *joystick &= ~kc_down;
         else
                 *joystick |= kc_down;
-        if (keyState & NOPH_GameCanvas_UP_PRESSED)
+        if (keyState & 0)//NOPH_GameCanvas_UP_PRESSED)
                 *joystick &= ~kc_up;
         else
                 *joystick |= kc_up;
+#else
+    int key = NOPH_MyXlet_pollInput();
+    if(key != 0 && !autostart)
+    {
+        int is_keyup = 0;
+        if(key < 0)
+        {
+            key = -key;
+            is_keyup = 1;
+        }
+        if(key >= 512 || !keyboard_cfg[key])
+        {
+            if(!is_keyup)
+                cibyl_keyboard_cfg();
+        }
+        else
+        {
+            key = keyboard_cfg[key] - 1;
+            if(key & 128)
+            {
+                if(is_keyup)
+                {
+                    if(keyboard_state[064] > 0)
+                        keyboard_state[064]--;
+                }
+                else
+                    keyboard_state[064]++;
+            }
+            key &= 127;
+            if(is_keyup)
+            {
+                if(keyboard_state[key] > 0)
+                    keyboard_state[key]--;
+            }
+            else
+                keyboard_state[key]++;
+        }
+    }
+    for(int i = 0; i < 8; i++)
+        key_matrix[i] = rev_matrix[i] = 0xff;
+    for(int i = 0; i < 64; i++)
+        if(keyboard_state[i])
+        {
+            int byte = i >> 3;
+            int bit = i & 7;
+            key_matrix[byte] &= ~(1 << bit);
+            rev_matrix[bit] &= ~(1 << byte);
+        }
+    *joystick = 0xff;
+    for(int i = 0; i < 5; i++)
+        if(keyboard_state[64+i])
+            *joystick &= ~(1 << i);
+#endif
 }
 
 

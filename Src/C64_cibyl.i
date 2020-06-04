@@ -83,14 +83,15 @@ void C64::Run(void)
 int autostart = 0;
 int autostart_type = 0;
 int autostart_index = 0;
-int autostart_keytime = 5;
+int autostart_keytime = 10;
+static int autostart_delay = 100;
 void C64::VBlank(bool draw_frame)
 {
         uint8 joy_state = 0xff;
 	// Poll keyboard
 	TheDisplay->PollKeyboard(TheCIA1->KeyMatrix, TheCIA1->RevMatrix, &joy_state);
 
-        if (autostart == 1)
+        if (autostart == 1 && (!autostart_delay || !autostart_delay--))
         {
 		int shifted;
 		int kc = get_kc_from_char(auto_seq[autostart_type][autostart_index], &shifted);
@@ -100,14 +101,14 @@ void C64::VBlank(bool draw_frame)
                 autostart_keytime --;
                 if (autostart_keytime == 0)
                 {
-                        autostart_keytime = 1;
+                        autostart_keytime = 10;
                         autostart_index ++;
 
                         if (autostart_index == 18)
                         {
                                 autostart = 0;
                                 autostart_index = 0;
-                                autostart_keytime = 5;
+                                autostart_keytime = 10;
                         }
                 }
         }
@@ -174,7 +175,6 @@ void C64::thread_func(void)
 	int linecnt = 0;
 
 	while (!quit_thyself) {
-
 		// The order of calls is important here
 		int cycles = TheVIC->EmulateLine();
 		TheSID->EmulateLine();

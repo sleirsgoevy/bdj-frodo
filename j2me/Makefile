@@ -16,23 +16,24 @@ PREVERIFY_REAL_PATH=$(shell readlink -f $(PREVERIFY_BINARY_PATH))
 PREVERIFY_DIRNAME=$(shell dirname $(PREVERIFY_BINARY_PATH))
 WTK_PATH=$(PREVERIFY_DIRNAME)/../
 
-all: frodo.jar
+all: tmpclasses/org/homebrew/Cibyl.class
 
-include/cibyl-syscalls.db: syscalls/command_mgr/include/command_mgr.h
-	cibyl-generate-c-header -o include syscalls command_mgr
+include/cibyl-syscalls.db: syscalls/bluplay/include/org/homebrew.h
+	python fake_bin/struct_pack_wrapper.py ../../cibyl/mips-cibyl-elf/bin/cibyl-generate-c-header -o include syscalls bluplay
 
 program: include/cibyl-syscalls.db
 	make -C ../Src -f ../Src/Makefile.cibyl
 
-tmpclasses/Cibyl.j: program
-	cibyl-mips2java -DJSR075 -I include -O -d tmpclasses program
+tmpclasses/org/homebrew/Cibyl.class: program
+	PATH="$$(pwd)/fake_bin:$$PATH" ../../cibyl/mips-cibyl-elf/bin/cibyl-mips2java -DJ2SE -DNOJ2ME -I include -O -d tmpclasses program --only-translate --package-name org.homebrew
+	bash rewrite_jasmin.sh
 
 frodo.jar: tmpclasses/Cibyl.j
 	install -d res
 	cp `cibyl-config --prefix`/mips-cibyl-elf/sys-root/usr/share/java/Main.java tmpclasses
 	cp `cibyl-config --prefix`/mips-cibyl-elf/sys-root/usr/share/java/GameScreenCanvas.java tmpclasses
 	cp CibylConfig.java tmpclasses/
-	cd tmpclasses && javac -classpath : -source 1.4 -bootclasspath $(WTK_PATH)/lib/cldcapi11.jar:$(WTK_PATH)/lib/midpapi20.jar:$(WTK_PATH)/lib/jsr75.jar -source 1.4 *.java
+	cd tmpclasses && javac -classpath : -source 1.3 -bootclasspath $(WTK_PATH)/lib/cldcapi11.jar:$(WTK_PATH)/lib/midpapi20.jar:$(WTK_PATH)/lib/jsr75.jar -source 1.3 *.java
 	preverify -classpath $(WTK_PATH)/lib/cldcapi11.jar:$(WTK_PATH)/lib/midpapi20.jar:$(WTK_PATH)/lib/jsr75.jar: -d classes/ tmpclasses/
 	cp tmpclasses/program.data.bin res/
 	cp "../Basic ROM" res/Basic_ROM

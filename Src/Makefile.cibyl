@@ -6,25 +6,27 @@ VERSION   = 4
 REVISION  = 1
 
 DEFINES = -DVERSION='"$(VERSION)"' -U__unix -DSMALL_DISPLAY=1
-CFLAGS  = -Wno-unused -fno-threadsafe-statics
+CFLAGS  = -Wno-unused -fno-threadsafe-statics -Os
 INCLUDES=-I../j2me/include
 TARGET = ../j2me/program
 OBJS = 1541d64.oo CPU1541.oo Prefs.oo CPU_common.oo  REU.oo \
        1541job.oo  CIA.oo  Display.oo IEC.oo SID.oo \
        C64.oo main.oo VIC.oo CPUC64.oo cibyl-menus.oo char_to_kc.o
 
-LDLIBS = -lcrt0 -Wl,--start-group -Wl,--whole-archive -lmidp -ljsr075 -lcibar -ls9 -lstdc++ -lc -Wl,--no-whole-archive -Wl,--end-group -ljava
+CIBYL = ../../cibyl/mips-cibyl-elf/bin/mips-cibyl-elf
+
+LDLIBS = -lcrt0 -Wl,--start-group -Wl,--whole-archive -lj2se -lstdc++ -lc -Wl,--no-whole-archive -Wl,--end-group -ljava # -lcibar -ls9
 
 all: sysconfig.h $(TARGET)
 
 %.oo: %.cpp
-	mips-cibyl-elf-g++ $(INCLUDES) $(CFLAGS) $(DEFINES) -c -Os -o $@ $<
+	$(CIBYL)-g++ $(INCLUDES) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 %.o: %.c
-	mips-cibyl-elf-gcc $(INCLUDES) $(CFLAGS) $(DEFINES) -c -Os -o $@ $<
+	$(CIBYL)-gcc $(INCLUDES) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 $(TARGET): $(OBJS)
-	mips-cibyl-elf-g++ -o $@ $+ $(LDLIBS)
+	$(CIBYL)-g++ -o $@ $+ $(LDLIBS)
 
 sysconfig.h: sysconfig.h.cibyl FORCE
 	cp $< $@

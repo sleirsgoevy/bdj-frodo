@@ -3,8 +3,8 @@
  *
  *  Frodo (C) 1994-1997,2002 Christian Bauer
  */
-#include <javax/microedition/lcdui.h>
-#include <javax/microedition/io.h>
+//#include <javax/microedition/lcdui.h>
+//#include <javax/microedition/io.h>
 
 #include "Version.h"
 
@@ -25,10 +25,13 @@ static char *selected_game;
  *  Create application object and start it
  */
 
+extern int autostart;
+extern int autostart_type;
+extern void cibyl_read_keyboard_cfg(void);
 int main(int argc, char **argv)
 {
-        NOPH_Display_t display = NOPH_Display_getDisplay(NOPH_MIDlet_get());
-        NOPH_Displayable_t cur = NOPH_Display_getCurrent(display);
+        //NOPH_Display_t display = NOPH_Display_getDisplay(NOPH_MIDlet_get());
+        //NOPH_Displayable_t cur = NOPH_Display_getCurrent(display);
 	Frodo *the_app;
 
 	timeval tv;
@@ -37,10 +40,17 @@ int main(int argc, char **argv)
 
 	printf("%s by Christian Bauer for Cibyl\n", VERSION_STRING);
         char *fsr = cibyl_select_fs_root();
+        cibyl_set_fs_root(fsr);
         selected_game = cibyl_select_game(fsr);
+        if(selected_game)
+        {
+                autostart = 1;
+                autostart_type = 0;
+        }
+        cibyl_read_keyboard_cfg();
 
         /* Restore the Cibyl displayable */
-        NOPH_Display_setCurrent(display, cur);
+        //NOPH_Display_setCurrent(display, cur);
 	if (!init_graphics())
 		return 0;
 
@@ -89,7 +99,7 @@ void Frodo::ReadyToRun(void)
 	TheC64 = new C64;
 
         Prefs *prefs = this->reload_prefs();
-        strncpy(prefs->DrivePath[0], selected_game, 80);
+        strncpy(prefs->DrivePath[0], selected_game, 255);
         if (strstr(selected_game, "t64"))
           prefs->DriveType[0] = DRVTYPE_T64;
         else
